@@ -11,15 +11,28 @@ public class Flock : MonoBehaviour
 
     [Header("Speed Setup")]
     [Range(0, 10)]
-    [SerializeField] private float minSpeed;
+    [SerializeField] private float _minSpeed;
+    public float minSpeed { get { return _minSpeed; } }
+
     [Range(0, 10)]
-    [SerializeField] private float maxSpeed;
+    [SerializeField] private float _maxSpeed;
+    public float maxSpeed { get { return _maxSpeed; } }
+
 
     [Header("Detection Distances")]
     [Range(0, 10)]
     [SerializeField] private float _cohesionDistance;
-
     public float cohesionDistance { get { return _cohesionDistance; } }
+
+    [Range(0, 10)]
+    [SerializeField] private float _avoidanceDistance;
+    public float avoidanceDistance { get { return _avoidanceDistance; } }
+
+    [Range(0, 10)]
+    [SerializeField] private float _aligementDistance;
+    public float aligementDistance { get { return _aligementDistance; } }
+
+
 
     public FlockUnit[] allUnits { get; set; }
 

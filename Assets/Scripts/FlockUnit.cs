@@ -8,6 +8,8 @@ public class FlockUnit : MonoBehaviour
     [SerializeField] private float smoothDamp;
 
     private List<FlockUnit> cohesionNeighbours = new List<FlockUnit>();
+    private List<FlockUnit> avoidanceNeighbours = new List<FlockUnit>();
+    private List<FlockUnit> aligementNeighbours = new List<FlockUnit>();
     private Flock assignedFlock;
     private Vector3 currentVelocity;
     private float speed;
@@ -26,17 +28,35 @@ public class FlockUnit : MonoBehaviour
 
     public void MoveUnit()
     {
+
+
         FindNeighbours();
+        CalculateSpeed();
+
         var cohesionVector = CalculateCohesionVector();
-        var moveVector = Vector3.SmoothDamp(myTransform.forward, cohesionVector, ref currentVelocity, smoothDamp);
+        var avoidanceVector = CalculateAvoidanceVector();
+        var aligementVector = CalculateAligementVector();
+        var moveVector = cohesionVector + avoidanceVector + aligementVector;
+
+        moveVector = Vector3.SmoothDamp(myTransform.forward, moveVector, ref currentVelocity, smoothDamp);
         moveVector = moveVector.normalized * speed;
+
+        if (moveVector == Vector3.zero)
+        {
+            moveVector = transform.forward;
+        }
+
         myTransform.forward = moveVector;
         myTransform.position += moveVector * Time.deltaTime;
     }
 
+    
+
     private void FindNeighbours()
     {
         cohesionNeighbours.Clear();
+        avoidanceNeighbours.Clear();
+        aligementNeighbours.Clear();
         var allUnits = assignedFlock.allUnits;
 
         for (int i = 0; i < allUnits.Length; i++)
@@ -49,8 +69,33 @@ public class FlockUnit : MonoBehaviour
                 {
                     cohesionNeighbours.Add(currentUnit);
                 }
+                if (currentNeighbourDistanceSqr <= assignedFlock.avoidanceDistance * assignedFlock.avoidanceDistance)
+                {
+                    avoidanceNeighbours.Add(currentUnit);
+                }
+                if (currentNeighbourDistanceSqr <= assignedFlock.aligementDistance * assignedFlock.aligementDistance)
+                {
+                    aligementNeighbours.Add(currentUnit);
+                }
             }
         }
+    }
+
+    private void CalculateSpeed()
+    {
+        if (cohesionNeighbours.Count == 0)
+        {
+            return;
+        }
+        
+        speed = 0;
+
+        for (int i = 0; i < cohesionNeighbours.Count; ++i)
+        {
+            speed += cohesionNeighbours[i].speed;
+        }
+        speed /= cohesionNeighbours.Count;
+        speed = Mathf.Clamp(speed, assignedFlock.minSpeed, assignedFlock.maxSpeed);
     }
 
     private Vector3 CalculateCohesionVector()
@@ -69,15 +114,71 @@ public class FlockUnit : MonoBehaviour
                 cohesionVector += cohesionNeighbours[i].myTransform.position;
             }
         }
-        if (neighboursInFOV == 0) 
-        {
-            return cohesionVector;
-        }
+     
         cohesionVector /= neighboursInFOV;
         cohesionVector -= myTransform.position;
-        cohesionVector = Vector3.Normalize(cohesionVector);
+        cohesionVector = cohesionVector.normalized;
         return cohesionVector;
     }
+
+
+
+    private Vector3 CalculateAligementVector()
+    {
+        var aligementVector = myTransform.forward;
+        if (aligementNeighbours.Count == 0)
+        {
+            return aligementVector;
+        }
+
+        int neighboursInFov = 0;
+
+        for (int i = 0; i < aligementNeighbours.Count; ++i)
+        {
+            if (IsInFov(aligementNeighbours[i].myTransform.forward))
+            {
+            neighboursInFov++;
+            aligementVector += aligementNeighbours[i].myTransform.forward;
+            }
+        }
+
+
+        aligementVector /= neighboursInFov;
+        aligementVector = aligementVector.normalized;
+
+
+        return aligementVector;
+    }
+
+
+    private Vector3 CalculateAvoidanceVector()
+    {
+        var avoidanceVector = Vector3.zero;
+        if (aligementNeighbours.Count == 0)
+        {
+            return Vector3.zero;
+        }
+
+        int neighboursInFov = 0;
+
+        for (int i = 0; i < avoidanceNeighbours.Count; ++i)
+        {
+            if (IsInFov(avoidanceNeighbours[i].myTransform.forward))
+            {
+                neighboursInFov++;
+                avoidanceVector += (myTransform.position - avoidanceNeighbours[i].myTransform.position);
+            }
+        }
+
+
+        avoidanceVector /= neighboursInFov;
+        avoidanceVector = avoidanceVector.normalized;
+
+
+        return avoidanceVector;
+    }
+
+
 
     private bool IsInFov(Vector3 position)
     {
