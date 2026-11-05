@@ -906,9 +906,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e52ac1c88f6cf3240bb8c6c10d976576, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flock
-  flockUnitPrefab: {fileID: 2096293248503361830, guid: d7b9289020b9ec640bf74efbfd3447fb, type: 3}
+  flockUnitPrefab: {fileID: -4360562161059407665, guid: d7b9289020b9ec640bf74efbfd3447fb, type: 3}
   flockSize: 100
   spawnBounds: {x: 10, y: 5, z: 10}
+  minSpeed: 1
+  maxSpeed: 1
+  _cohesionDistance: 5
 --- !u!4 &2063159816
 Transform:
   m_ObjectHideFlags: 0
